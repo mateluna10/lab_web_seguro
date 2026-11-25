@@ -21,8 +21,7 @@ pipeline {
                     docker build -t $APP_IMAGE .
                 '''
             }
-        }
-
+        
         stage('Test - OWASP ZAP Scan') {
             steps {
                 // Levantar la app en segundo plano
@@ -31,13 +30,13 @@ pipeline {
                     sleep 5
                 '''
                 // Ejecutar OWASP ZAP (Escaneo rápido)
-                sh '''
+                 sh '''
                     echo "Iniciando escaneo de seguridad con ZAP..."
-                    docker run --rm -v $(pwd):/zap/wrk/:rw \
+                    docker run --rm -u root -v $(pwd):/zap/wrk/:rw \
                       ghcr.io/zaproxy/zaproxy:stable zap-baseline.py \
                       -t $TARGET_URL -r zap-report.html || true
                 '''
-            }
+           
             post {
                 always {
                     // Publicar el reporte HTML

@@ -1,0 +1,14 @@
+venv/
+__pycache__/
+*.pyc
+*.db
+.git/
+.gitignore
+zap-report.html
+zap-report.json
+zap-warnings.md
+pip-audit-report.json
+cookies.txt
+dash.html
+token.txt
+verificacion_local.txt

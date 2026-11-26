@@ -1,4 +1,26 @@
+# Entorno virtual y caché
 venv/
 __pycache__/
 *.pyc
-vulnerable.db
+*.pyo
+
+# Base de datos local
+*.db
+
+# Artefactos de verificación local
+cookies.txt
+dash.html
+token.txt
+verificacion_local.txt
+app_temp.log
+zap-report.html
+zap-report.json
+zap-warnings.md
+pip-audit-report.json
+
+# Variables de entorno
+.env
+
+# IDE
+.vscode/
+.idea/

@@ -54,17 +54,21 @@ pipeline {
                 '''
                 sh '''
                     docker rm -f zap_temp 2>/dev/null || true
+                    docker volume rm zap_wrk_tmp 2>/dev/null || true
+                    docker volume create zap_wrk_tmp
                     docker run --name zap_temp -u root \
                       --add-host=host.docker.internal:host-gateway \
+                      -v zap_wrk_tmp:/zap/wrk \
                       $ZAP_IMAGE zap-baseline.py \
                       -t http://host.docker.internal:5000 \
-                      -r /tmp/zap-report.html \
-                      -w /tmp/zap-warnings.md \
-                      -J /tmp/zap-report.json || true
-                    docker cp zap_temp:/tmp/zap-report.html ./zap-report.html || true
-                    docker cp zap_temp:/tmp/zap-warnings.md ./zap-warnings.md || true
-                    docker cp zap_temp:/tmp/zap-report.json ./zap-report.json || true
+                      -r zap-report.html \
+                      -w zap-warnings.md \
+                      -J zap-report.json || true
+                    docker cp zap_temp:/zap/wrk/zap-report.html ./zap-report.html || true
+                    docker cp zap_temp:/zap/wrk/zap-warnings.md ./zap-warnings.md || true
+                    docker cp zap_temp:/zap/wrk/zap-report.json ./zap-report.json || true
                     docker rm -f zap_temp
+                    docker volume rm zap_wrk_tmp
                 '''
             }
             post {

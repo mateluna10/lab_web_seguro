@@ -25,9 +25,9 @@ pipeline {
         stage('SCA - pip-audit') {
             steps {
                 sh '''
-                    docker run --rm -v "$WORKSPACE:/src" -w /src python:3.14-slim \
-                      sh -c "pip install --quiet pip-audit && \
-                             pip-audit -r requirements.txt -f json -o pip-audit-report.json || true"
+                    docker run --rm $APP_IMAGE \
+                      sh -c "pip install --quiet pip-audit && pip-audit -r /app/requirements.txt -f json" \
+                      > pip-audit-report.json || true
                 '''
             }
             post {
@@ -42,22 +42,29 @@ pipeline {
                 sh '''
                     docker run -d --rm --name app_temp -p 5000:5000 $APP_IMAGE
                     for i in $(seq 1 30); do
-                        if curl -s -o /dev/null -w "%{http_code}" http://localhost:5000/login | grep -q "200"; then
+                        if docker exec app_temp python -c "import urllib.request; urllib.request.urlopen('http://localhost:5000/login', timeout=2)" 2>/dev/null; then
                             echo "App lista en intento $i"
                             exit 0
                         fi
                         sleep 2
                     done
+                    echo "App no respondio en 60s"
                     docker logs app_temp
                     exit 1
                 '''
                 sh '''
-                    docker run --rm -u root \
+                    docker rm -f zap_temp 2>/dev/null || true
+                    docker run --name zap_temp -u root \
                       --add-host=host.docker.internal:host-gateway \
-                      -v $(pwd):/zap/wrk/:rw \
                       $ZAP_IMAGE zap-baseline.py \
                       -t http://host.docker.internal:5000 \
-                      -r zap-report.html -w zap-warnings.md -J zap-report.json || true
+                      -r /tmp/zap-report.html \
+                      -w /tmp/zap-warnings.md \
+                      -J /tmp/zap-report.json || true
+                    docker cp zap_temp:/tmp/zap-report.html ./zap-report.html || true
+                    docker cp zap_temp:/tmp/zap-warnings.md ./zap-warnings.md || true
+                    docker cp zap_temp:/tmp/zap-report.json ./zap-report.json || true
+                    docker rm -f zap_temp
                 '''
             }
             post {
